@@ -4,7 +4,7 @@ from oauthhandler import OAuthHandler
 from random import randint
 
 # Responsible for making REST calls to Twitter API
-class RestHandler:
+class RESTHandler:
 	# End point for REST calls
 	# TODO: Should I clarify GET/POST in name?
 	PLACES_EP = "https://api.twitter.com/1.1/trends/place.json?id="
@@ -27,22 +27,24 @@ class RestHandler:
 		# Attempt to get OAuth Client
 		self.oauthhandler = OAuthHandler()		
 		if(self.verify_credentials()):
+			logging.info('OAuth Client created successfully')
 		else:
 			logging.critical('Unable to birth OAuth Client')
-		
-	# Gets a list of trends
-	def get_trends(self):
+	
+	# Gets a list of trends, picks a random one and returns the url
+	def get_trend_url(self):
 		places_ep = self.PLACES_EP + str(self.GLOBAL_WOEID)
 		logging.info('Attempting to get list of places from ' + places_ep)
 		resp, data = self.oauthhandler.client.request(places_ep)
 		jsonData = json.loads(data)
-		# Loop through trends that aren't promoted
+		# With the list of trends, pick a random index
 		trends = jsonData[self.JSON_DATA_INDEX][self.TRENDS_KEY]
 		numTrends = len(trends)
+		logging.info('Grabbing random trend')
 		rndIndex = randint(0, numTrends - 1)
 		trend = trends[rndIndex]
 		logging.info('Getting tweets for %s' % trend[self.NAME_KEY])
-		logging.info(trend[self.URL_KEY])
+		return trend[self.URL_KEY]
 		
 	# Used to verify that our credentials are still authorized
 	def verify_credentials(self):
@@ -52,5 +54,3 @@ class RestHandler:
 			return True
 		else:
 			return False
-	
-		
