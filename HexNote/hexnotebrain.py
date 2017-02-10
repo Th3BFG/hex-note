@@ -6,8 +6,8 @@ from random import randint
 # The main driver for decision making
 class HexNoteBrain:
 	# Constants
-	LOWER_SLEEP_LIMIT = 48
-	UPPER_SLEEP_LIMIT = 136
+	LOWER_SLEEP_LIMIT = 2880
+	UPPER_SLEEP_LIMIT = 8160
 
 	# ctor
 	def __init__(self):
