@@ -1,14 +1,13 @@
-import json
 import oauth2 as oauth
 import logging
-import confighandler
+from confighandler import ConfigHandler
 
 # The following class is responsible for creating an OAuth1 Client
-class oauthhandler:
+class OAuthHandler:
 	# ctor
 	def __init__(self):
 		logging.info('Attempting to grab config settings')
-		self.config = confighandler.get_config()
+		self.config = ConfigHandler()
 		if(self.config != None):
 			if self.create_client():
 				logging.info("We're in.")
