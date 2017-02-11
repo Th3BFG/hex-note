@@ -6,8 +6,8 @@ from random import randint
 # The main driver for decision making
 class HexNoteBrain:
 	# Constants
-	LOWER_SLEEP_LIMIT = 2880
-	UPPER_SLEEP_LIMIT = 8160
+	LOWER_SLEEP_LIMIT = 36000 # Lets keep chat light while it's simple
+	UPPER_SLEEP_LIMIT = 133200
 
 	# ctor
 	def __init__(self):
@@ -28,6 +28,10 @@ class HexNoteBrain:
 			if coin == 0: #tails - stay alone
 				# Say something to Twitterverse
 				logging.info('Talking to myself')
+				url = get_trend_url(self)
+				# pick a random post from the url
+				# use them for the tweet
+				# create a speechhandler after that
 			else:
 				# Say something to a random someone
 				logging.info('Talking to someone')
@@ -36,3 +40,4 @@ class HexNoteBrain:
 			logging.info('Going to sleep')
 			sleep_time = randint(self.LOWER_SLEEP_LIMIT, self.UPPER_SLEEP_LIMIT)
 			time.sleep(sleep_time)
+			# Verify credentials, reconnect if needed.
