@@ -18,28 +18,28 @@ class HexNoteBrain:
 		self.handler = RESTHandler()
 		self.speech = SpeechHandler()
 		# Start main decision
+		self.run = True
 		self.start_main_loop()		
 		
 	# Main processing loop
 	# We'll wait some length of time then decide if we want to talk to someone
 	def start_main_loop(self):
 		logging.info('Start the main loop')
-		run = True
-		while run:
+		while self.run:
 			# Verify our creds or establish new creds if needed
 			auth_attempt = 1
 			while self.handler.verify_credentials() != True:
 				# Make sure we don't just hammer the auth server
-				if auth_attempt > AUTH_ATTEMPT_MAX:
+				if auth_attempt > self.AUTH_ATTEMPT_MAX:
 					logging.critical('Unable to fetch valid credentials')
-					run = False
+					self.run = False
 					break
 				logging.Warning('Issue with credentials - attempting to fix')
 				# Issue with the OAuth Creds, recreate RESTHandler to fix
 				self.handler = None
 				self.handler = RESTHandler()
 				auth_attempt += 1
-			if run:
+			if self.run:
 				# Do you want to talk to someone?
 				# Lets be a bit more introverted 
 				coin = randint(0,4)
@@ -56,7 +56,7 @@ class HexNoteBrain:
 					saying = self.speech.speak(user)	
 				# With the tweet composed, send it out
 				logging.info(saying)
-				self.handler.update_status(saying)
+				#self.handler.update_status(saying)
 				# Go to sleep, wake up at some point
 				logging.info('Going to sleep')
 				sleep_time = randint(self.LOWER_SLEEP_LIMIT, self.UPPER_SLEEP_LIMIT)
