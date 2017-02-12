@@ -41,21 +41,22 @@ class HexNoteBrain:
 				auth_attempt += 1
 			if run:
 				# Do you want to talk to someone?
-				# flip a coin for now
-				coin = randint(0,1)
-				if coin == 0: #tails - stay alone
+				# Lets be a bit more introverted 
+				coin = randint(0,4)
+				if coin < 4:
 					# Say something to Twitterverse
 					logging.info('Talking to myself')
 					saying = self.speech.speak()
-					logging.info(saying)
 				else:
 					# Say something to a random someone
 					logging.info('Talking to someone')
 					query = self.handler.get_trend_query()
 					user = self.handler.get_tweet_user(query)
 					logging.info('Talking to %s' % user)
-					saying = self.speech.speak(user)
-					logging.info(saying)
+					saying = self.speech.speak(user)	
+				# With the tweet composed, send it out
+				logging.info(saying)
+				self.handler.update_status(saying)
 				# Go to sleep, wake up at some point
 				logging.info('Going to sleep')
 				sleep_time = randint(self.LOWER_SLEEP_LIMIT, self.UPPER_SLEEP_LIMIT)
