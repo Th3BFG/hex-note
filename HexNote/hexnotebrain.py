@@ -54,7 +54,7 @@ class HexNoteBrain:
 					query = self.handler.get_trend_query()
 					user = self.handler.get_tweet_user(query)
 					logging.info('Talking to %s' % user)
-					saying = self.speech.speak() # supply user
+					saying = self.speech.speak(user)
 					logging.info(saying)
 				# Go to sleep, wake up at some point
 				logging.info('Going to sleep')
