@@ -27,7 +27,7 @@ def main():
 # Daemon to run Hex Note
 def create_hn_daemon():
 	logging.info('Starting Hex Note')
-	thread = threading.Thread(name='Brain Thread', target=HexNoteBrain)
+	thread = threading.Thread(name='BrainThread', target=HexNoteBrain)
 	thread.daemon = True
 	return thread
 	

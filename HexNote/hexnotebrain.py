@@ -56,7 +56,7 @@ class HexNoteBrain:
 					saying = self.speech.speak(user)	
 				# With the tweet composed, send it out
 				logging.info(saying)
-				#self.handler.update_status(saying)
+				self.handler.update_status(saying)
 				# Go to sleep, wake up at some point
 				logging.info('Going to sleep')
 				sleep_time = randint(self.LOWER_SLEEP_LIMIT, self.UPPER_SLEEP_LIMIT)

@@ -35,3 +35,4 @@ class ConfigHandler:
 			return Config(cKey = cK, cSecret = cS, aKey = aK, aSecret = aS)
 		except (ConfigParser.Error):
 			logging.error("There was an error reading your configuration")
+			return None
