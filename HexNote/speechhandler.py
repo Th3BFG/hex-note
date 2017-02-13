@@ -3,7 +3,7 @@ import binascii
 from random import randint
 
 class SpeechHandler:
-	# I'm going to need to define a grammar. I can't decide if I want to stick to a tree or CFG.
+	# TODO: Do this right. I'll need to research grammars a bit and flesh this out.
 	#SECONDARY_NOUN = {'you'}
 	#PUNCTUATION = ['?']
 	PLURAL_NOUN = ['cars', 'computers', 'peaches', 'pies', 'feelings', 'people', 'money']
