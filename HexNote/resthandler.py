@@ -49,7 +49,7 @@ class RESTHandler:
 		numTrends = len(trends)
 		if numTrends > 0:
 			logging.info('Grabbing random trend')
-			rndIndex = randint(0, numTrends - 1)
+			rndIndex = randint(0, (numTrends - 1))
 			trend = trends[rndIndex]
 			logging.info('Getting tweets for %s' % trend[self.NAME_KEY])
 			return trend[self.QUERY_KEY]

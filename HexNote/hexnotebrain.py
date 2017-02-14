@@ -7,7 +7,7 @@ from speechhandler import SpeechHandler
 # The main driver for decision making
 class HexNoteBrain:
 	# Constants
-	LOWER_SLEEP_LIMIT = 36000 # Lets keep chat light while it's simple
+	LOWER_SLEEP_LIMIT = 22932 # Lets keep chat light while it's simple
 	UPPER_SLEEP_LIMIT = 133200
 	AUTH_ATTEMPT_MAX = 3 # Limit auth attempts to 3 for now
 
