@@ -20,6 +20,7 @@ class SpeechHandler:
 	IPN_S = [START[1], WHITESPACE, PERSONAL_VERB, WHITESPACE, PLURAL_NOUN, PUNCTUATION] # I
 	IAPN_S = [START[1], WHITESPACE, PERSONAL_VERB, WHITESPACE, ADJECTIVE, WHITESPACE, PLURAL_NOUN, PUNCTUATION] # I
 	SENTENCES = [WHAT_S, IA_S, IPN_S, IAPN_S]
+	HEY = 'Hey'
 	
 	# ctor
 	def __init__(self):
@@ -32,17 +33,18 @@ class SpeechHandler:
 		# Account for username - simply add it to the front for now
 		if user != None:
 			logging.info('User found, adding to status')
-			s += 'Hey @%s ' % user
+			heyHex = binascii.hexlify(HEY)
+			s += heyHex + ' @%s ' % user
 		# Pick a sentence and construct it
 		numSentences = len(self.SENTENCES)
 		rndSentence = randint(0, (numSentences - 1))
 		sentence = self.SENTENCES[rndSentence]
 		res = self.construct_sentence(sentence)
-		s += res
-		logging.info(s)
 		# Convert the saying to hex as is tradition
-		hexStr = binascii.hexlify(s)
-		return hexStr
+		hexStr = binascii.hexlify(res)
+		s += hexStr
+		logging.info(s)
+		return s
 		
 	# Construct a sentence from the collection of its parts
 	def construct_sentence(self, parts=None):
