@@ -58,7 +58,7 @@ class HexNoteBrain:
 				# With the tweet composed, send it out
 				localtime = time.asctime( time.localtime(time.time()) )
 				logging.info(saying + ' at %s' % localtime)
-				#self.handler.update_status(saying)
+				self.handler.update_status(saying)
 				# Go to sleep, wake up at some point
 				sleep_time = randint(self.LOWER_SLEEP_LIMIT, self.UPPER_SLEEP_LIMIT)
 				sleep_time_min = sleep_time / self.MINUTE

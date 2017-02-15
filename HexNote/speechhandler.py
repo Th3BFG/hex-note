@@ -17,8 +17,8 @@ class SpeechHandler:
 	START = ["What", "I"]
 	WHAT_S = [START[0], WHITESPACE, PLURAL_PRESENT_VERB, WHITESPACE, PLURAL_NOUN, PUNCTUATION[QUESTION]] # What
 	IA_S = [START[1], WHITESPACE, PERSONAL_VERB, WHITESPACE, ADJECTIVE, PUNCTUATION] # I 
-	IPN_S = [START[1], WHITESPACE, PERSONAL_VERB, WHITESPACE, PLURAL_NOUN, PUNCTUATION] # I
-	IAPN_S = [START[1], WHITESPACE, PERSONAL_VERB, WHITESPACE, ADJECTIVE, WHITESPACE, PLURAL_NOUN, PUNCTUATION] # I
+	IPN_S = [START[1], WHITESPACE, PERSONAL_VERB, WHITESPACE, PLURAL_NOUN, PUNCTUATION[1]] # I
+	IAPN_S = [START[1], WHITESPACE, PERSONAL_VERB, WHITESPACE, ADJECTIVE, WHITESPACE, PLURAL_NOUN, PUNCTUATION[1]] # I
 	SENTENCES = [WHAT_S, IA_S, IPN_S, IAPN_S]
 	HEY = 'Hey'
 	
@@ -33,7 +33,7 @@ class SpeechHandler:
 		# Account for username - simply add it to the front for now
 		if user != None:
 			logging.info('User found, adding to status')
-			heyHex = binascii.hexlify(HEY)
+			heyHex = binascii.hexlify(self.HEY)
 			s += heyHex + ' @%s ' % user
 		# Pick a sentence and construct it
 		numSentences = len(self.SENTENCES)
@@ -43,7 +43,8 @@ class SpeechHandler:
 		# Convert the saying to hex as is tradition
 		hexStr = binascii.hexlify(res)
 		s += hexStr
-		logging.info(s)
+		logging.info("Text: " + res)
+		logging.info("Hex: " + s)
 		return s
 		
 	# Construct a sentence from the collection of its parts
