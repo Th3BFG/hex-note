@@ -10,6 +10,7 @@ class HexNoteBrain:
 	LOWER_SLEEP_LIMIT = 22932 # Lets keep chat light while it's simple
 	UPPER_SLEEP_LIMIT = 133200
 	AUTH_ATTEMPT_MAX = 3 # Limit auth attempts to 3 for now
+	MINUTE = 60
 
 	# ctor
 	def __init__(self):
@@ -55,11 +56,13 @@ class HexNoteBrain:
 					logging.info('Talking to %s' % user)
 					saying = self.speech.speak(user)	
 				# With the tweet composed, send it out
-				logging.info(saying)
-				self.handler.update_status(saying)
+				localtime = time.asctime( time.localtime(time.time()) )
+				logging.info(saying + ' at %s' % localtime)
+				#self.handler.update_status(saying)
 				# Go to sleep, wake up at some point
-				logging.info('Going to sleep')
 				sleep_time = randint(self.LOWER_SLEEP_LIMIT, self.UPPER_SLEEP_LIMIT)
+				sleep_time_min = sleep_time / self.MINUTE
+				logging.info('Going to sleep for %d min' % sleep_time_min)
 				time.sleep(sleep_time)
 			else:
 				logging.critical('There was a major issue - shutting down')
