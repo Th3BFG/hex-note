@@ -1,5 +1,6 @@
 import time
 import logging
+import threading
 from resthandler import RESTHandler
 from random import randint
 from speechhandler import SpeechHandler
@@ -20,27 +21,32 @@ class HexNoteBrain:
 		self.speech = SpeechHandler()
 		# Start main decision
 		self.run = True
-		self.start_main_loop()		
+		# Start Main loop daemon thread
+		logging.info('Starting main loop thread')
+		mlThread = threading.Thread(name='MainSpeechThread', target=self.main_loop, args=(self.run,))
+		mlThread.daemon = True
+		mlThread.start()
+		# Start mention repsonse daemon thread
 		
 	# Main processing loop
 	# We'll wait some length of time then decide if we want to talk to someone
-	def start_main_loop(self):
+	def main_loop(self, run):
 		logging.info('Start the main loop')
-		while self.run:
+		while run:
 			# Verify our creds or establish new creds if needed
 			auth_attempt = 1
 			while self.handler.verify_credentials() != True:
 				# Make sure we don't just hammer the auth server
 				if auth_attempt > self.AUTH_ATTEMPT_MAX:
 					logging.critical('Unable to fetch valid credentials')
-					self.run = False
+					run = False
 					break
 				logging.Warning('Issue with credentials - attempting to fix')
 				# Issue with the OAuth Creds, recreate RESTHandler to fix
 				self.handler = None
 				self.handler = RESTHandler()
 				auth_attempt += 1
-			if self.run:
+			if run:
 				# Do you want to talk to someone?
 				# Lets be a bit more introverted 
 				coin = randint(0,4)
@@ -58,7 +64,7 @@ class HexNoteBrain:
 				# With the tweet composed, send it out
 				localtime = time.asctime( time.localtime(time.time()) )
 				logging.info(saying + ' at %s' % localtime)
-				self.handler.update_status(saying)
+				#self.handler.update_status(saying)
 				# Go to sleep, wake up at some point
 				sleep_time = randint(self.LOWER_SLEEP_LIMIT, self.UPPER_SLEEP_LIMIT)
 				sleep_time_min = sleep_time / self.MINUTE

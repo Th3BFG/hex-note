@@ -1,6 +1,7 @@
 import json
 import logging
 import urllib
+import threading
 from oauthhandler import OAuthHandler
 from random import randint
 
@@ -31,6 +32,7 @@ class RESTHandler:
 	# ctor
 	def __init__(self):
 		logging.info('Creating RESTHandler');
+		self.lock = threading.RLock()
 		# Attempt to get OAuth Client
 		self.oauthhandler = OAuthHandler()		
 		if(self.verify_credentials()):
@@ -40,54 +42,60 @@ class RESTHandler:
 	
 	# Gets a list of trends, picks a random one and returns the query
 	def get_trend_query(self):
-		places_ep = self.PLACES_EP + str(self.GLOBAL_WOEID)
-		logging.info('Attempting to get list of places from ' + places_ep)
-		resp, data = self.get_request(places_ep)
-		jsonData = json.loads(data)
-		# With the list of trends, pick a random index
-		trends = jsonData[self.JSON_DATA_INDEX][self.TRENDS_KEY]
-		numTrends = len(trends)
-		if numTrends > 0:
-			logging.info('Grabbing random trend')
-			rndIndex = randint(0, (numTrends - 1))
-			trend = trends[rndIndex]
-			logging.info('Getting tweets for %s' % trend[self.NAME_KEY])
-			return trend[self.QUERY_KEY]
-		else:
-			logging.error('No trends were returned')
-	
+		# Take lock to do work
+		with self.lock:
+			places_ep = self.PLACES_EP + str(self.GLOBAL_WOEID)
+			logging.info('Attempting to get list of places from ' + places_ep)
+			resp, data = self.get_request(places_ep)
+			jsonData = json.loads(data)
+			# With the list of trends, pick a random index
+			trends = jsonData[self.JSON_DATA_INDEX][self.TRENDS_KEY]
+			numTrends = len(trends)
+			if numTrends > 0:
+				logging.info('Grabbing random trend')
+				rndIndex = randint(0, (numTrends - 1))
+				trend = trends[rndIndex]
+				logging.info('Getting tweets for %s' % trend[self.NAME_KEY])
+				return trend[self.QUERY_KEY]
+			else:
+				logging.error('No trends were returned')
+
 	# From the trend query, select a random tweet. Return the user who posted it
 	def get_tweet_user(self, query):
-		logging.info('Attempting to get list of tweets for trend')
-		tweets_ep = self.QUERY_SEARCH_EP + query + self.TWEET_SEARCH_LIMIT
-		resp, data = self.get_request(tweets_ep)
-		tweet_data = json.loads(data)
-		tweets = tweet_data[self.STATUSES_KEY]
-		logging.info('Selecting a random tweet')
-		numTweets = len(tweets)
-		if numTweets > 0:
-			rndIndex = randint(0, numTweets - 1)
-			tweet = tweets[rndIndex]
-			logging.info('Grabbing user info')
-			user = tweet[self.USER_KEY]
-			user_sn = user[self.SCREEN_NAME_KEY]
-			return user_sn
-		else:
-			logging.error('No tweets were returned')
+		# Take lock to do work
+		with self.lock:
+			logging.info('Attempting to get list of tweets for trend')
+			tweets_ep = self.QUERY_SEARCH_EP + query + self.TWEET_SEARCH_LIMIT
+			resp, data = self.get_request(tweets_ep)
+			tweet_data = json.loads(data)
+			tweets = tweet_data[self.STATUSES_KEY]
+			logging.info('Selecting a random tweet')
+			numTweets = len(tweets)
+			if numTweets > 0:
+				rndIndex = randint(0, numTweets - 1)
+				tweet = tweets[rndIndex]
+				logging.info('Grabbing user info')
+				user = tweet[self.USER_KEY]
+				user_sn = user[self.SCREEN_NAME_KEY]
+				return user_sn
+			else:
+				logging.error('No tweets were returned')
 	
 	# Updates status with a tweet. Takes in the status.	
 	def update_status(self, status):
-		# Verify that status is under 140 characters
-		if len(status) <= self.MAX_TWEET_LEN:
-			status_ep = self.UPDATE_STATUS_EP + status
-			logging.info('Attempting to post tweet')
-			resp, data = self.post_request(status_ep, status)
-			if self.resp_success(resp[self.STATUS_KEY]):
-				logging.info('Post successful')
+		# Take lock to do work
+		with self.lock:
+			# Verify that status is under 140 characters
+			if len(status) <= self.MAX_TWEET_LEN:
+				status_ep = self.UPDATE_STATUS_EP + status
+				logging.info('Attempting to post tweet')
+				resp, data = self.post_request(status_ep, status)
+				if self.resp_success(resp[self.STATUS_KEY]):
+					logging.info('Post successful')
+				else:
+					logging.error('There was an error posting the tweet')
 			else:
-				logging.error('There was an error posting the tweet')
-		else:
-			logging.error('Tweet is too long to post')
+				logging.error('Tweet is too long to post')
 	
 	# Used to verify that our credentials are still authorized
 	def verify_credentials(self):
