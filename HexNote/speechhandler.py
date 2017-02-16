@@ -31,7 +31,7 @@ class SpeechHandler:
 		logging.info('Decide what to say')
 		s = ''
 		# Account for username - simply add it to the front for now
-		if user != None:
+		if user is not None:
 			logging.info('User found, adding to status')
 			heyHex = binascii.hexlify(self.HEY)
 			s += heyHex + ' @%s ' % user

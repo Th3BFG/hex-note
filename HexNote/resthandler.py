@@ -12,11 +12,13 @@ class RESTHandler:
 	VERIFY_CREDS_EP = "https://api.twitter.com/1.1/account/verify_credentials.json" #GET
 	UPDATE_STATUS_EP = "https://api.twitter.com/1.1/statuses/update.json?status=" #POST
 	QUERY_SEARCH_EP = "https://api.twitter.com/1.1/search/tweets.json?q=" #GET
+	MENTIONS_EP = "https://api.twitter.com/1.1/statuses/mentions_timeline.json?count=" #GET
 
 	# Constants
 	GLOBAL_WOEID = 1 # I'll grab trends from a global perspective for now
 	JSON_DATA_INDEX = 0 # I have a feeling that Twitter nests most of its response data
 	MAX_TWEET_LEN = 140
+	MAX_MENTIONS = 20 # Number of mentions to get at one time
 	TWEET_SEARCH_LIMIT = "&count=20" # Additional, optional parameter for Query Search to limit returned tweets
 	HTTP_SUCCESS = '200'
 	TRENDS_KEY = 'trends'
@@ -28,17 +30,33 @@ class RESTHandler:
 	STATUSES_KEY = 'statuses'
 	SCREEN_NAME_KEY = 'screen_name'
 	USER_KEY = 'user'
+	SINCE_ID_KEY = '&since_id='
 
 	# ctor
 	def __init__(self):
 		logging.info('Creating RESTHandler');
 		self.lock = threading.RLock()
+		self.since_id = None
 		# Attempt to get OAuth Client
 		self.oauthhandler = OAuthHandler()		
 		if(self.verify_credentials()):
 			logging.info('OAuth Client created successfully')
 		else:
 			logging.critical('Unable to birth OAuth Client')
+	
+	# Gets a list of mentions and will use the since_id if it exists
+	def get_mentions(self):
+		logging.info('Attempting to get list of mentions')
+		mentions_ep = self.MENTIONS_EP +str(self.MAX_MENTIONS)
+		# if a since_id exists, attach it
+		if self.since_id is not None:
+			logging.info('since_id found: %d' % self.since_id)
+			mentions_ep += self.SINCE_ID_KEY + str(self.since_id)
+		logging.info('Getting mentions at %s' % mentions_ep)
+		# With the constructed endpoint, make the callable
+		resp, data = self.get_request(mentions_ep)
+		print resp
+		print data			
 	
 	# Gets a list of trends, picks a random one and returns the query
 	def get_trend_query(self):

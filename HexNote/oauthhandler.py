@@ -8,7 +8,7 @@ class OAuthHandler:
 	def __init__(self):
 		logging.info('Creating OAuthHandler')
 		self.config = ConfigHandler()
-		if(self.config != None):
+		if(self.config is not None):
 			self.create_client()
 			
 	# Attempts to create a client with twitter

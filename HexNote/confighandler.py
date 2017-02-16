@@ -12,7 +12,7 @@ class ConfigHandler:
 
 	def __init__(self):
 		settings = self.get_config()
-		if(settings != None):
+		if(settings is not None):
 			self.cKey = settings.cKey
 			self.cSecret = settings.cSecret
 			self.aKey = settings.aKey

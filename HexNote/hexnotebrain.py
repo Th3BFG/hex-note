@@ -63,7 +63,7 @@ class HexNoteBrain:
 			if self.run:
 				# Check for most recent mentions, pick one to respond to
 				# Check if hex, if not, respond with 'what?' in hex
-				print('mention')
+				self.handler.get_mentions()
 				# Go to sleep, wake up at some point
 				sleep_time_min = self.HOUR_LIMIT / self.MINUTE
 				logging.info('Going to sleep for %d min' % sleep_time_min)
@@ -74,7 +74,7 @@ class HexNoteBrain:
 		# Verify our creds or establish new creds if needed
 		with self.lock:
 			auth_attempt = 1
-			while self.handler.verify_credentials() != True:
+			while not self.handler.verify_credentials():
 				# Make sure we don't just hammer the auth server
 				if auth_attempt > self.AUTH_ATTEMPT_MAX:
 					logging.critical('Unable to fetch valid credentials')
