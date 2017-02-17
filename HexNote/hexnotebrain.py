@@ -147,8 +147,8 @@ class HexNoteBrain:
 		result = self.rest.get_user_from_mention()
 		if result is not None:
 			# Get results
-			user = result[USER]
-			text = result[TEXT]
+			user = result[self.USER]
+			text = result[self.TEXT]
 			# do hex test
 			isHex = False
 			try:
