@@ -20,7 +20,7 @@ class HexNoteBrain:
 		logging.info('Creating the brain')
 		# start by getting our API handler up and running
 		self.condition = threading.Condition()
-		self.lock = threading.RLock()
+		#self.lock = threading.RLock()
 		self.rest = RESTHandler()
 		self.speech = SpeechHandler()
 		self.run = True
@@ -53,9 +53,12 @@ class HexNoteBrain:
 			if self.run:
 				saying = self.get_saying()	
 				# With the tweet composed, send it out
-				localtime = time.asctime( time.localtime(time.time()) )
-				logging.info(saying + ' at %s' % localtime)
-				self.rest.update_status(saying) # Comment this line if testing
+				if __debug__:
+					logging.info('Not Tweeting - DEBUG')
+				else:
+					localtime = time.asctime( time.localtime(time.time()) )
+					logging.info(saying + ' at %s' % localtime)
+					self.rest.update_status(saying) # Comment this line if testing
 				# Go to sleep, wake up at some point
 				with self.condition:
 					sleep_time = randint(self.LOWER_SLEEP_LIMIT, self.UPPER_SLEEP_LIMIT)
@@ -72,7 +75,7 @@ class HexNoteBrain:
 		# I think having both loops fire at once is causing some issue.
 		with self.condition:
 			logging.info('Going to sleep for 3 min. Non-Compete Clause with MainSpeechThread')
-			self.condition.wait(MENTION_INITIAL_WAIT)
+			self.condition.wait(self.MENTION_INITIAL_WAIT)
 		logging.info('Start the mention loop')
 		while self.run:
 			self.run = self.creds_valid()
@@ -84,9 +87,12 @@ class HexNoteBrain:
 				# If no mention is found, no saying is returned.
 				if mention_saying is not None and mention_saying != '':
 					# Time to respond
-					localtime = time.asctime( time.localtime(time.time()) )
-					logging.info(mention_saying + ' at %s' % localtime)
-					self.rest.update_status(mention_saying) # Comment this line if testing
+					if __debug__:
+						logging.info('Not Tweeting - DEBUG')
+					else:
+						localtime = time.asctime( time.localtime(time.time()) )
+						logging.info(mention_saying + ' at %s' % localtime)
+						self.rest.update_status(mention_saying) # Comment this line if testing
 				# Go to sleep, wake up at some point
 				with self.condition:
 					sleep_time_min = self.HOUR_LIMIT / self.MINUTE
@@ -97,20 +103,20 @@ class HexNoteBrain:
 	# Verify that creditials are valid still
 	def creds_valid(self):
 		# Verify our creds or establish new creds if needed
-		with self.lock:
-			auth_attempt = 1
-			while not self.rest.verify_credentials():
-				# Make sure we don't just hammer the auth server
-				if auth_attempt > self.AUTH_ATTEMPT_MAX:
-					logging.critical('Unable to fetch valid credentials')
-					return False
-				logging.Warning('Issue with credentials - attempting to fix')
-				# Issue with the OAuth Creds, recreate RESTHandler to fix
-				self.rest = None
-				self.rest = RESTHandler()
-				auth_attempt += 1
-			# If creds are valid return true
-			return True
+		#with self.lock:
+		auth_attempt = 1
+		while not self.rest.verify_credentials():
+			# Make sure we don't just hammer the auth server
+			if auth_attempt > self.AUTH_ATTEMPT_MAX:
+				logging.critical('Unable to fetch valid credentials')
+				return False
+			logging.Warning('Issue with credentials - attempting to fix')
+			# Issue with the OAuth Creds, recreate RESTHandler to fix
+			self.rest = None
+			self.rest = RESTHandler()
+			auth_attempt += 1
+		# If creds are valid return true
+		return True
 	
 	# Gets a saying for the main speech loop
 	def get_saying(self):
@@ -137,21 +143,24 @@ class HexNoteBrain:
 	def get_mention_saying(self):
 		# Get user from mention
 		user, text = self.rest.get_user_from_mention()
-		# do hex test
-		isHex = False
-		try:
-			# TODO: Better hex searching. why not
-			# remove user name and whitespace before testing
-			text_no_un = text.replace(('@' + user), '')
-			text_stripped = text.replace(' ', '')
-			isHex = int(text_stripped, 16)
-			logging.info('Mention was hex')
-		except ValueError:
-			logging.info('Mention was not hex')
-		# Construct a reply for the user
-		logging.info('User for reply: %s' % user)
-		reply = ''
-		if user is not None and user != '':
-			reply = self.speech.reply(isHex, user)
-		return reply
+		if user is not None:
+			# do hex test
+			isHex = False
+			try:
+				# TODO: Better hex searching. why not
+				# remove user name and whitespace before testing
+				text_no_un = text.replace(('@' + user), '')
+				text_stripped = text.replace(' ', '')
+				isHex = int(text_stripped, 16)
+				logging.info('Mention was hex')
+			except ValueError:
+				logging.info('Mention was not hex')
+			# Construct a reply for the user
+			logging.info('User for reply: %s' % user)
+			reply = ''
+			if user is not None and user != '':
+				reply = self.speech.reply(isHex, user)
+			return reply
+		else:
+			return None
 		
