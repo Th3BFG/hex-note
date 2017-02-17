@@ -22,6 +22,7 @@ def main():
 			logging.info('"stop" received')
 			logging.info('Shutting down Hex Note')
 			brain.shutdown()
+			brain = None
 			break
 	
 # Based on lvl, return enum logging level

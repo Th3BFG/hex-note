@@ -11,7 +11,7 @@ class RESTHandler:
 	# End points for REST calls
 	PLACES_EP = "https://api.twitter.com/1.1/trends/place.json?id=" #GET
 	VERIFY_CREDS_EP = "https://api.twitter.com/1.1/account/verify_credentials.json" #GET
-	UPDATE_STATUS_EP = "https://api.twitter.com/1.1/statuses/update.json?status=" #POST
+	UPDATE_STATUS_EP = "https://api.twitter.com/1.1/statuses/update.json" #POST
 	QUERY_SEARCH_EP = "https://api.twitter.com/1.1/search/tweets.json?q=" #GET
 	MENTIONS_EP = "https://api.twitter.com/1.1/statuses/mentions_timeline.json?count=" #GET
 
@@ -138,8 +138,9 @@ class RESTHandler:
 		with self.lock:
 			# Verify that status is under 140 characters
 			if len(status) <= self.MAX_TWEET_LEN:
-				status_ep = self.UPDATE_STATUS_EP + status
+				status_ep = self.UPDATE_STATUS_EP
 				logging.info('Attempting to post tweet')
+				print status_ep
 				resp, data = self.post_request(status_ep, status)
 				if self.resp_success(resp[self.STATUS_KEY]):
 					logging.info('Post successful')
@@ -168,5 +169,4 @@ class RESTHandler:
 			endpoint,
 			method='POST',
 			body=urllib.urlencode({'status':post_body}),
-			headers=None
 		)

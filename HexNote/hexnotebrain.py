@@ -13,6 +13,7 @@ class HexNoteBrain:
 	HOUR_LIMIT = 3600
 	AUTH_ATTEMPT_MAX = 3 # Limit auth attempts to 3 for now
 	MINUTE = 60
+	MENTION_INITIAL_WAIT = 180
 
 	# ctor
 	def __init__(self):
@@ -54,7 +55,7 @@ class HexNoteBrain:
 				# With the tweet composed, send it out
 				localtime = time.asctime( time.localtime(time.time()) )
 				logging.info(saying + ' at %s' % localtime)
-				#self.rest.update_status(saying) # Comment this line if testing
+				self.rest.update_status(saying) # Comment this line if testing
 				# Go to sleep, wake up at some point
 				with self.condition:
 					sleep_time = randint(self.LOWER_SLEEP_LIMIT, self.UPPER_SLEEP_LIMIT)
@@ -68,6 +69,10 @@ class HexNoteBrain:
 	# Mentions loop
 	# Respond to mentions that have happened since the last response
 	def mention_loop(self):
+		# I think having both loops fire at once is causing some issue.
+		with self.condition:
+			logging.info('Going to sleep for 3 min. Non-Compete Clause with MainSpeechThread')
+			self.condition.wait(MENTION_INITIAL_WAIT)
 		logging.info('Start the mention loop')
 		while self.run:
 			self.run = self.creds_valid()
@@ -81,7 +86,7 @@ class HexNoteBrain:
 					# Time to respond
 					localtime = time.asctime( time.localtime(time.time()) )
 					logging.info(mention_saying + ' at %s' % localtime)
-					#self.rest.update_status(mention_saying) # Comment this line if testing
+					self.rest.update_status(mention_saying) # Comment this line if testing
 				# Go to sleep, wake up at some point
 				with self.condition:
 					sleep_time_min = self.HOUR_LIMIT / self.MINUTE
