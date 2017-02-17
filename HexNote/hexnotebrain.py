@@ -14,6 +14,8 @@ class HexNoteBrain:
 	AUTH_ATTEMPT_MAX = 3 # Limit auth attempts to 3 for now
 	MINUTE = 60
 	MENTION_INITIAL_WAIT = 180
+	USER = 0
+	TEXT = 1
 
 	# ctor
 	def __init__(self):
@@ -73,9 +75,9 @@ class HexNoteBrain:
 	# Respond to mentions that have happened since the last response
 	def mention_loop(self):
 		# I think having both loops fire at once is causing some issue.
-		with self.condition:
-			logging.info('Going to sleep for 3 min. Non-Compete Clause with MainSpeechThread')
-			self.condition.wait(self.MENTION_INITIAL_WAIT)
+		#with self.condition:
+		#	logging.info('Going to sleep for 3 min. Non-Compete Clause with MainSpeechThread')
+		#	self.condition.wait(self.MENTION_INITIAL_WAIT)
 		logging.info('Start the mention loop')
 		while self.run:
 			self.run = self.creds_valid()
@@ -142,8 +144,11 @@ class HexNoteBrain:
 	# Gets a saying based on mentions(self)
 	def get_mention_saying(self):
 		# Get user from mention
-		user, text = self.rest.get_user_from_mention()
-		if user is not None:
+		result = self.rest.get_user_from_mention()
+		if result is not None:
+			# Get results
+			user = result[USER]
+			text = result[TEXT]
 			# do hex test
 			isHex = False
 			try:
