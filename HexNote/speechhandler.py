@@ -5,6 +5,7 @@ from random import randint
 class SpeechHandler:
 	# Constants
 	QUESTION = 0
+	PERIOD = 1
 
 	# TODO: Do this right. I'll need to research grammars a bit and flesh this out.
 	#SECONDARY_NOUN = {'you'}
@@ -17,9 +18,12 @@ class SpeechHandler:
 	START = ["What", "I"]
 	WHAT_S = [START[0], WHITESPACE, PLURAL_PRESENT_VERB, WHITESPACE, PLURAL_NOUN, PUNCTUATION[QUESTION]] # What
 	IA_S = [START[1], WHITESPACE, PERSONAL_VERB, WHITESPACE, ADJECTIVE, PUNCTUATION] # I 
-	IPN_S = [START[1], WHITESPACE, PERSONAL_VERB, WHITESPACE, PLURAL_NOUN, PUNCTUATION[1]] # I
-	IAPN_S = [START[1], WHITESPACE, PERSONAL_VERB, WHITESPACE, ADJECTIVE, WHITESPACE, PLURAL_NOUN, PUNCTUATION[1]] # I
+	IPN_S = [START[1], WHITESPACE, PERSONAL_VERB, WHITESPACE, PLURAL_NOUN, PUNCTUATION[PERIOD]] # I
+	IAPN_S = [START[1], WHITESPACE, PERSONAL_VERB, WHITESPACE, ADJECTIVE, WHITESPACE, PLURAL_NOUN, PUNCTUATION[PERIOD]] # I
+	WHAT_R = [WHITESPACE, START[0], PUNCTUATION[QUESTION]] 
+	ONE_R = [WHITESPACE, 'ONE OF US']
 	SENTENCES = [WHAT_S, IA_S, IPN_S, IAPN_S]
+	REPLIES = [WHAT_R, ONE_R]
 	HEY = 'Hey'
 	
 	# ctor
@@ -45,6 +49,22 @@ class SpeechHandler:
 		s += hexStr
 		logging.info("Text: " + res)
 		logging.info("Hex: " + s)
+		return s
+		
+	def reply(self, isHex, user=None):
+		logging.info('Decide on a reply')
+		s = ''
+		# Add user account to reply
+		if user is not None:
+			s += '@%s ' % user
+		# Pick a reply
+		reply = ''
+		if isHex:
+			reply += self.construct_sentence(self.REPLIES[1])
+		else:
+			reply += self.construct_sentence(self.REPLIES[0])
+		# Convert reply to hex
+		s += binascii.hexlify(reply)
 		return s
 		
 	# Construct a sentence from the collection of its parts

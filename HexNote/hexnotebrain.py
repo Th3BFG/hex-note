@@ -120,8 +120,22 @@ class HexNoteBrain:
 	# Gets a saying based on mentions(self)
 	def get_mention_saying(self):
 		# Get user from mention
-		user = self.rest.get_user_from_mention()
+		user, text = self.rest.get_user_from_mention()
+		# do hex test
+		isHex = False
+		try:
+			# TODO: Better hex searching. why not
+			# remove user name and whitespace before testing
+			text_no_un = text.replace(('@' + user), '')
+			text_stripped = text.replace(' ', '')
+			isHex = int(text_stripped, 16)
+			logging.info('Mention was hex')
+		except ValueError:
+			logging.info('Mention was not hex')
 		# Construct a reply for the user
 		logging.info('User for reply: %s' % user)
-		
+		reply = ''
+		if user is not None and user != '':
+			reply = self.speech.reply(isHex, user)
+		return reply
 		

@@ -69,11 +69,12 @@ class RESTHandler:
 				logging.info('Grabbing random mention')
 				rndIndex = randint(0, (numMentions - 1))
 				mention = mentions_data[rndIndex]
-				logging.info('id: %s' % mention[self.ID_KEY])
+				logging.info('Storing id: %s' % mention[self.ID_KEY])
 				self.config.set_value(self.config.MENTION_SECTION, self.config.MENTION_ID, str(mention['id']))
-				logging.info('mention: %s' % mention[self.TEXT_KEY])
-				logging.info(mention)
-				return None
+				user = mention[self.USER_KEY][self.SCREEN_NAME_KEY]
+				text = mention[self.TEXT_KEY]
+				logging.info('Mention to respond to: %s by: %s' % (text, user))
+				return (user, text)
 			else:
 				logging.info('No mentions were found')
 				return None
@@ -122,11 +123,10 @@ class RESTHandler:
 					rndIndex = randint(0, numTweets - 1)
 					tweet = tweets[rndIndex]
 					logging.info('Grabbing user info')
-					user = tweet[self.USER_KEY]
-					user_sn = user[self.SCREEN_NAME_KEY]
-					return user_sn
+					user = tweet[self.USER_KEY][self.SCREEN_NAME_KEY]
+					return user
 				else:
-					logging.warmomg('No tweets were returned')
+					logging.warning('No tweets were returned')
 					return None
 			else:
 				logging.error('There was an issue fetching the list of tweets')

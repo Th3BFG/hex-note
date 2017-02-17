@@ -37,14 +37,7 @@ class ConfigHandler:
 		logging.info('Attempting to read configuration')
 		try:
 			self.config.read(self.FILE_NAME)
-			#Config = namedtuple('Config', 'cKey cSecret aKey aSecret mID')
-			#cK = config.get(self.CONSUMER_SECTION, self.CONSUMER_KEY)
-			#cS = config.get(self.CONSUMER_SECTION, self.CONSUMER_SECRET)
-			#aK = config.get(self.ACCESS_SECTION, self.ACCESS_KEY)
-			#aS = config.get(self.ACCESS_SECTION, self.ACCESS_SECRET)
-			#mI = config.get(self.MENTION_SECTION, self.MENTION_ID)
 			logging.info('Config read')	
-			#return Config(cKey = cK, cSecret = cS, aKey = aK, aSecret = aS, mID = mI)
 		except (ConfigParser.Error):
 			logging.error("There was an error reading your configuration")
 			return None
