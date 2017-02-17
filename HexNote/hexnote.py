@@ -15,11 +15,14 @@ def main():
 	logLvl = options.loglevel
 	logging.basicConfig(format='[%(levelname)s](%(threadName)-10s):%(message)s', level=get_log_lvl(logLvl))
 	#Start up Hex Note Daemon
-	dThread = create_hn_daemon()
-	dThread.start()
+	brain = HexNoteBrain()
+	
+	#dThread = create_hn_daemon()
+	#dThread.start()
 	# Listen for stop command on main thread
 	while True:
 		if raw_input() == 'stop':
+			brain.run = False
 			logging.info('"stop" received')
 			logging.info('Shutting down Hex Note')
 			sys.exit() # TODO: clean up worker thread before exiting
