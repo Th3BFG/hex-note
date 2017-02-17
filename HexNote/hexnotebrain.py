@@ -18,6 +18,7 @@ class HexNoteBrain:
 	def __init__(self):
 		logging.info('Creating the brain')
 		# start by getting our API handler up and running
+		self.condition = threading.Condition()
 		self.lock = threading.RLock()
 		self.rest = RESTHandler()
 		self.speech = SpeechHandler()
@@ -31,6 +32,14 @@ class HexNoteBrain:
 		mentionThead = threading.Thread(name='MentionThread', target=self.mention_loop)
 		mentionThead.daemon = True
 		mentionThead.start()
+		
+	# Wake up threads
+	def shutdown(self):
+		with self.condition:
+			logging.info('Beginning shutdown process')
+			self.run = False
+			logging.info('Waking up threads')
+			self.condition.notifyAll()
 		
 	# Main processing loop
 	# We'll wait some length of time then decide if we want to talk to someone
@@ -47,10 +56,11 @@ class HexNoteBrain:
 				logging.info(saying + ' at %s' % localtime)
 				#self.rest.update_status(saying) # Comment this line if testing
 				# Go to sleep, wake up at some point
-				sleep_time = randint(self.LOWER_SLEEP_LIMIT, self.UPPER_SLEEP_LIMIT)
-				sleep_time_min = sleep_time / self.MINUTE
-				logging.info('Going to sleep for %d min' % sleep_time_min)
-				time.sleep(sleep_time)
+				with self.condition:
+					sleep_time = randint(self.LOWER_SLEEP_LIMIT, self.UPPER_SLEEP_LIMIT)
+					sleep_time_min = sleep_time / self.MINUTE
+					logging.info('Going to sleep for %d min' % sleep_time_min)
+					self.condition.wait(sleep_time)
 			else:
 				logging.critical('There was a major issue - shutting down')
 		logging.info('MainSpeechThread is ending')
@@ -73,9 +83,10 @@ class HexNoteBrain:
 					logging.info(mention_saying + ' at %s' % localtime)
 					#self.rest.update_status(mention_saying) # Comment this line if testing
 				# Go to sleep, wake up at some point
-				sleep_time_min = self.HOUR_LIMIT / self.MINUTE
-				logging.info('Going to sleep for %d min' % sleep_time_min)
-				time.sleep(self.HOUR_LIMIT)
+				with self.condition:
+					sleep_time_min = self.HOUR_LIMIT / self.MINUTE
+					logging.info('Going to sleep for %d min' % sleep_time_min)
+					self.condition.wait(self.HOUR_LIMIT)
 		logging.info('MentionThread is ending')
 	
 	# Verify that creditials are valid still
