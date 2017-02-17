@@ -2,6 +2,7 @@ import json
 import logging
 import urllib
 import threading
+from confighandler import ConfigHandler
 from oauthhandler import OAuthHandler
 from random import randint
 
@@ -18,7 +19,7 @@ class RESTHandler:
 	GLOBAL_WOEID = 1 # I'll grab trends from a global perspective for now
 	JSON_DATA_INDEX = 0 # I have a feeling that Twitter nests most of its response data
 	MAX_TWEET_LEN = 140
-	MAX_MENTIONS = 20 # Number of mentions to get at one time
+	MAX_MENTIONS = 10 # Number of mentions to get at one time
 	TWEET_SEARCH_LIMIT = "&count=20" # Additional, optional parameter for Query Search to limit returned tweets
 	HTTP_SUCCESS = '200'
 	TRENDS_KEY = 'trends'
@@ -31,33 +32,55 @@ class RESTHandler:
 	SCREEN_NAME_KEY = 'screen_name'
 	USER_KEY = 'user'
 	SINCE_ID_KEY = '&since_id='
+	ID_KEY = 'id'
+	TEXT_KEY = 'text'
 
 	# ctor
 	def __init__(self):
 		logging.info('Creating RESTHandler');
 		self.lock = threading.RLock()
 		self.since_id = None
+		# Get Config and set since_id
+		self.config = ConfigHandler()
+		self.since_id = self.config.mention_id()
 		# Attempt to get OAuth Client
-		self.oauthhandler = OAuthHandler()		
+		self.oauthhandler = OAuthHandler(self.config)		
 		if(self.verify_credentials()):
 			logging.info('OAuth Client created successfully')
 		else:
 			logging.critical('Unable to birth OAuth Client')
 	
 	# Gets a list of mentions and will use the since_id if it exists
-	def get_mentions(self):
+	def get_user_from_mention(self):
 		logging.info('Attempting to get list of mentions')
 		mentions_ep = self.MENTIONS_EP +str(self.MAX_MENTIONS)
 		# if a since_id exists, attach it
-		if self.since_id is not None:
-			logging.info('since_id found: %d' % self.since_id)
+		if self.since_id is not None and self.since_id != '':
+			logging.info('since_id found: %s' % self.since_id)
 			mentions_ep += self.SINCE_ID_KEY + str(self.since_id)
 		logging.info('Getting mentions at %s' % mentions_ep)
 		# With the constructed endpoint, make the callable
 		resp, data = self.get_request(mentions_ep)
-		print resp
-		print data			
-	
+		if self.resp_success(resp[self.STATUS_KEY]):
+			mentions_data = json.loads(data)
+			# Pick a mention out of the list
+			numMentions = len(mentions_data)
+			if numMentions > 0:
+				logging.info('Grabbing random mention')
+				rndIndex = randint(0, (numMentions - 1))
+				mention = mentions_data[rndIndex]
+				logging.info('id: %s' % mention[self.ID_KEY])
+				self.config.set_value(self.config.MENTION_SECTION, self.config.MENTION_ID, str(mention['id']))
+				logging.info('mention: %s' % mention[self.TEXT_KEY])
+				logging.info(mention)
+				return None
+			else:
+				logging.info('No mentions were found')
+				return None
+		else:
+			logging.error('There was an issue fetching the list of mentions')
+			return None
+			
 	# Gets a list of trends, picks a random one and returns the query
 	def get_trend_query(self):
 		# Take lock to do work
@@ -65,19 +88,24 @@ class RESTHandler:
 			places_ep = self.PLACES_EP + str(self.GLOBAL_WOEID)
 			logging.info('Attempting to get list of places from ' + places_ep)
 			resp, data = self.get_request(places_ep)
-			jsonData = json.loads(data)
-			# With the list of trends, pick a random index
-			trends = jsonData[self.JSON_DATA_INDEX][self.TRENDS_KEY]
-			numTrends = len(trends)
-			if numTrends > 0:
-				logging.info('Grabbing random trend')
-				rndIndex = randint(0, (numTrends - 1))
-				trend = trends[rndIndex]
-				logging.info('Getting tweets for %s' % trend[self.NAME_KEY])
-				return trend[self.QUERY_KEY]
+			if self.resp_success(resp[self.STATUS_KEY]):
+				jsonData = json.loads(data)
+				# With the list of trends, pick a random index
+				trends = jsonData[self.JSON_DATA_INDEX][self.TRENDS_KEY]
+				numTrends = len(trends)
+				if numTrends > 0:
+					logging.info('Grabbing random trend')
+					rndIndex = randint(0, (numTrends - 1))
+					trend = trends[rndIndex]
+					logging.info('Getting tweets for %s' % trend[self.NAME_KEY])
+					return trend[self.QUERY_KEY]
+				else:
+					logging.error('No trends were returned')
+					return None
 			else:
-				logging.error('No trends were returned')
-
+				logging.error('There was an issue getting the list of locales')
+				return None
+					
 	# From the trend query, select a random tweet. Return the user who posted it
 	def get_tweet_user(self, query):
 		# Take lock to do work
@@ -85,19 +113,24 @@ class RESTHandler:
 			logging.info('Attempting to get list of tweets for trend')
 			tweets_ep = self.QUERY_SEARCH_EP + query + self.TWEET_SEARCH_LIMIT
 			resp, data = self.get_request(tweets_ep)
-			tweet_data = json.loads(data)
-			tweets = tweet_data[self.STATUSES_KEY]
-			logging.info('Selecting a random tweet')
-			numTweets = len(tweets)
-			if numTweets > 0:
-				rndIndex = randint(0, numTweets - 1)
-				tweet = tweets[rndIndex]
-				logging.info('Grabbing user info')
-				user = tweet[self.USER_KEY]
-				user_sn = user[self.SCREEN_NAME_KEY]
-				return user_sn
+			if self.resp_success(resp[self.STATUS_KEY]):
+				tweet_data = json.loads(data)
+				tweets = tweet_data[self.STATUSES_KEY]
+				logging.info('Selecting a random tweet')
+				numTweets = len(tweets)
+				if numTweets > 0:
+					rndIndex = randint(0, numTweets - 1)
+					tweet = tweets[rndIndex]
+					logging.info('Grabbing user info')
+					user = tweet[self.USER_KEY]
+					user_sn = user[self.SCREEN_NAME_KEY]
+					return user_sn
+				else:
+					logging.warmomg('No tweets were returned')
+					return None
 			else:
-				logging.error('No tweets were returned')
+				logging.error('There was an issue fetching the list of tweets')
+				return None
 	
 	# Updates status with a tweet. Takes in the status.	
 	def update_status(self, status):

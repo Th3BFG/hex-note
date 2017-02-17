@@ -19,7 +19,7 @@ class HexNoteBrain:
 		logging.info('Creating the brain')
 		# start by getting our API handler up and running
 		self.lock = threading.RLock()
-		self.handler = RESTHandler()
+		self.rest = RESTHandler()
 		self.speech = SpeechHandler()
 		self.run = True
 		# Start Main loop daemon thread
@@ -45,7 +45,7 @@ class HexNoteBrain:
 				# With the tweet composed, send it out
 				localtime = time.asctime( time.localtime(time.time()) )
 				logging.info(saying + ' at %s' % localtime)
-				#self.handler.update_status(saying)
+				#self.rest.update_status(saying) # Comment this line if testing
 				# Go to sleep, wake up at some point
 				sleep_time = randint(self.LOWER_SLEEP_LIMIT, self.UPPER_SLEEP_LIMIT)
 				sleep_time_min = sleep_time / self.MINUTE
@@ -53,6 +53,7 @@ class HexNoteBrain:
 				time.sleep(sleep_time)
 			else:
 				logging.critical('There was a major issue - shutting down')
+		logging.info('MainSpeechThread is ending')
 	
 	# Mentions loop
 	# Respond to mentions that have happened since the last response
@@ -63,26 +64,34 @@ class HexNoteBrain:
 			if self.run:
 				# Check for most recent mentions, pick one to respond to
 				# Check if hex, if not, respond with 'what?' in hex
-				self.handler.get_mentions()
+				logging.info('Grabbing list of mentions')
+				mention_saying = self.get_mention_saying()
+				# If no mention is found, no saying is returned.
+				if mention_saying is not None and mention_saying != '':
+					# Time to respond
+					localtime = time.asctime( time.localtime(time.time()) )
+					logging.info(mention_saying + ' at %s' % localtime)
+					#self.rest.update_status(mention_saying) # Comment this line if testing
 				# Go to sleep, wake up at some point
 				sleep_time_min = self.HOUR_LIMIT / self.MINUTE
 				logging.info('Going to sleep for %d min' % sleep_time_min)
 				time.sleep(self.HOUR_LIMIT)
+		logging.info('MentionThread is ending')
 	
 	# Verify that creditials are valid still
 	def creds_valid(self):
 		# Verify our creds or establish new creds if needed
 		with self.lock:
 			auth_attempt = 1
-			while not self.handler.verify_credentials():
+			while not self.rest.verify_credentials():
 				# Make sure we don't just hammer the auth server
 				if auth_attempt > self.AUTH_ATTEMPT_MAX:
 					logging.critical('Unable to fetch valid credentials')
 					return False
 				logging.Warning('Issue with credentials - attempting to fix')
 				# Issue with the OAuth Creds, recreate RESTHandler to fix
-				self.handler = None
-				self.handler = RESTHandler()
+				self.rest = None
+				self.rest = RESTHandler()
 				auth_attempt += 1
 			# If creds are valid return true
 			return True
@@ -100,8 +109,19 @@ class HexNoteBrain:
 		else:
 			# Say something to a random someone
 			logging.info('Talking to someone')
-			query = self.handler.get_trend_query()
-			user = self.handler.get_tweet_user(query)
-			logging.info('Talking to %s' % user)
-			text = self.speech.speak(user)
+			query = self.rest.get_trend_query()
+			if query is not None:
+				user = self.rest.get_tweet_user(query)
+				if user is not None:
+					logging.info('Talking to %s' % user)
+					text = self.speech.speak(user)
 		return text
+		
+	# Gets a saying based on mentions(self)
+	def get_mention_saying(self):
+		# Get user from mention
+		user = self.rest.get_user_from_mention()
+		# Construct a reply for the user
+		logging.info('User for reply: %s' % user)
+		
+		

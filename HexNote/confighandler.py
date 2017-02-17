@@ -5,34 +5,56 @@ from collections import namedtuple
 # User Configuration Handler
 class ConfigHandler:
 	# Some Config Constants
+	FILE_NAME = 'app.cfg'
+	FILE_MODE = 'wb'
+	CONSUMER_SECTION = 'Consumer Info'
+	ACCESS_SECTION = 'Access Info'
+	MENTION_SECTION = 'Mention Info'
 	CONSUMER_KEY = 'CONSUMER_KEY'
 	CONSUMER_SECRET = 'CONSUMER_SECRET'
 	ACCESS_KEY = 'ACCESS_KEY'
 	ACCESS_SECRET = 'ACCESS_SECRET'
+	MENTION_ID = 'MENTION_ID'
 
 	def __init__(self):
-		settings = self.get_config()
-		if(settings is not None):
-			self.cKey = settings.cKey
-			self.cSecret = settings.cSecret
-			self.aKey = settings.aKey
-			self.aSecret = settings.aSecret
-		else:
-			logging.critcal('Configuration retrieval has failed')
+		self.config = ConfigParser.SafeConfigParser()
+		self.get_config()
+		
+	# GETTERS!!!
+	def consumer_key(self):
+		return self.config.get(self.CONSUMER_SECTION, self.CONSUMER_KEY)
+	def consumer_secret(self):
+		return self.config.get(self.CONSUMER_SECTION, self.CONSUMER_SECRET)
+	def access_key(self):
+		return self.config.get(self.ACCESS_SECTION, self.ACCESS_KEY)
+	def access_secret(self):
+		return self.config.get(self.ACCESS_SECTION, self.ACCESS_SECRET)
+	def mention_id(self):
+		return self.config.get(self.MENTION_SECTION, self.MENTION_ID)
 		
 	# Gets settings out of the config file
 	def get_config(self):
-		config = ConfigParser.SafeConfigParser()
 		logging.info('Attempting to read configuration')
 		try:
-			config.read('app.cfg')
-			Config = namedtuple('Config', 'cKey cSecret aKey aSecret')
-			cK = config.get('Consumer Info', self.CONSUMER_KEY)
-			cS = config.get('Consumer Info', self.CONSUMER_SECRET)
-			aK = config.get('Access Info', self.ACCESS_KEY)
-			aS = config.get('Access Info', self.ACCESS_SECRET)
-			logging.info('Config read, returning data')	
-			return Config(cKey = cK, cSecret = cS, aKey = aK, aSecret = aS)
+			self.config.read(self.FILE_NAME)
+			#Config = namedtuple('Config', 'cKey cSecret aKey aSecret mID')
+			#cK = config.get(self.CONSUMER_SECTION, self.CONSUMER_KEY)
+			#cS = config.get(self.CONSUMER_SECTION, self.CONSUMER_SECRET)
+			#aK = config.get(self.ACCESS_SECTION, self.ACCESS_KEY)
+			#aS = config.get(self.ACCESS_SECTION, self.ACCESS_SECRET)
+			#mI = config.get(self.MENTION_SECTION, self.MENTION_ID)
+			logging.info('Config read')	
+			#return Config(cKey = cK, cSecret = cS, aKey = aK, aSecret = aS, mID = mI)
 		except (ConfigParser.Error):
 			logging.error("There was an error reading your configuration")
 			return None
+	
+	# Set a config values
+	def set_value(self, section, option, value):
+		logging.info('Updating Configuration Values')
+		self.config.set(section, option, value)
+		# Write changes to file
+		with open(self.FILE_NAME, self.FILE_MODE) as configFile:
+			self.config.write(configFile)
+		
+	
