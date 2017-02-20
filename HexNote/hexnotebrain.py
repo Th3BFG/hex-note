@@ -112,7 +112,7 @@ class HexNoteBrain:
 			if auth_attempt > self.AUTH_ATTEMPT_MAX:
 				logging.critical('Unable to fetch valid credentials')
 				return False
-			logging.Warning('Issue with credentials - attempting to fix')
+			logging.warning('Issue with credentials - attempting to fix')
 			# Issue with the OAuth Creds, recreate RESTHandler to fix
 			self.rest = None
 			self.rest = RESTHandler()

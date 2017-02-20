@@ -2,6 +2,8 @@ import json
 import logging
 import urllib
 import threading
+import socket
+import errno
 from confighandler import ConfigHandler
 from oauthhandler import OAuthHandler
 from random import randint
@@ -155,8 +157,15 @@ class RESTHandler:
 	def verify_credentials(self):
 		with self.lock:
 			logging.info('Attempting to verify credentials')
-			resp, data = self.get_request(self.VERIFY_CREDS_EP)
-			return self.resp_success(resp[self.STATUS_KEY])
+			try:
+				resp, data = self.get_request(self.VERIFY_CREDS_EP)
+				return self.resp_success(resp[self.STATUS_KEY])
+			except socket.error as ex:
+				if ex.errno == errno.ETIMEDOUT:
+					logging.warning('The connection to the Twitter API timed out')
+			except Exception as e:
+				logging.warning('There was an issue verifying the credentials')
+				logging.warning(e)
 
 	# Checks HTTP response code for success
 	def resp_success(self, status_val):
