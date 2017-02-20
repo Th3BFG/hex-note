@@ -2,6 +2,8 @@ import json
 import logging
 import urllib
 import threading
+import socket
+import errno
 from confighandler import ConfigHandler
 from oauthhandler import OAuthHandler
 from random import randint
@@ -11,7 +13,7 @@ class RESTHandler:
 	# End points for REST calls
 	PLACES_EP = "https://api.twitter.com/1.1/trends/place.json?id=" #GET
 	VERIFY_CREDS_EP = "https://api.twitter.com/1.1/account/verify_credentials.json" #GET
-	UPDATE_STATUS_EP = "https://api.twitter.com/1.1/statuses/update.json?status=" #POST
+	UPDATE_STATUS_EP = "https://api.twitter.com/1.1/statuses/update.json" #POST
 	QUERY_SEARCH_EP = "https://api.twitter.com/1.1/search/tweets.json?q=" #GET
 	MENTIONS_EP = "https://api.twitter.com/1.1/statuses/mentions_timeline.json?count=" #GET
 
@@ -19,7 +21,7 @@ class RESTHandler:
 	GLOBAL_WOEID = 1 # I'll grab trends from a global perspective for now
 	JSON_DATA_INDEX = 0 # I have a feeling that Twitter nests most of its response data
 	MAX_TWEET_LEN = 140
-	MAX_MENTIONS = 10 # Number of mentions to get at one time
+	MAX_MENTIONS = 5 # Number of mentions to get at one time
 	TWEET_SEARCH_LIMIT = "&count=20" # Additional, optional parameter for Query Search to limit returned tweets
 	HTTP_SUCCESS = '200'
 	TRENDS_KEY = 'trends'
@@ -34,6 +36,8 @@ class RESTHandler:
 	SINCE_ID_KEY = '&since_id='
 	ID_KEY = 'id'
 	TEXT_KEY = 'text'
+	ID_STR_KEY = 'id_str'
+	USER_MENTIONS_KEY = 'user_mentions'
 
 	# ctor
 	def __init__(self):
@@ -69,8 +73,9 @@ class RESTHandler:
 				logging.info('Grabbing random mention')
 				rndIndex = randint(0, (numMentions - 1))
 				mention = mentions_data[rndIndex]
-				logging.info('Storing id: %s' % mention[self.ID_KEY])
-				self.config.set_value(self.config.MENTION_SECTION, self.config.MENTION_ID, str(mention['id']))
+				self.since_id = mention[self.ID_STR_KEY]
+				logging.info('Storing id: %s' % self.since_id)
+				self.config.set_value(self.config.MENTION_SECTION, self.config.MENTION_ID, self.since_id)
 				user = mention[self.USER_KEY][self.SCREEN_NAME_KEY]
 				text = mention[self.TEXT_KEY]
 				logging.info('Mention to respond to: %s by: %s' % (text, user))
@@ -138,7 +143,7 @@ class RESTHandler:
 		with self.lock:
 			# Verify that status is under 140 characters
 			if len(status) <= self.MAX_TWEET_LEN:
-				status_ep = self.UPDATE_STATUS_EP + status
+				status_ep = self.UPDATE_STATUS_EP
 				logging.info('Attempting to post tweet')
 				resp, data = self.post_request(status_ep, status)
 				if self.resp_success(resp[self.STATUS_KEY]):
@@ -150,9 +155,17 @@ class RESTHandler:
 	
 	# Used to verify that our credentials are still authorized
 	def verify_credentials(self):
-		logging.info('Attempting to verify credentials')
-		resp, data = self.get_request(self.VERIFY_CREDS_EP)
-		return self.resp_success(resp[self.STATUS_KEY])
+		with self.lock:
+			logging.info('Attempting to verify credentials')
+			try:
+				resp, data = self.get_request(self.VERIFY_CREDS_EP)
+				return self.resp_success(resp[self.STATUS_KEY])
+			except socket.error as ex:
+				if ex.errno == errno.ETIMEDOUT:
+					logging.warning('The connection to the Twitter API timed out')
+			except Exception as e:
+				logging.warning('There was an issue verifying the credentials')
+				logging.warning(e)
 
 	# Checks HTTP response code for success
 	def resp_success(self, status_val):
@@ -160,13 +173,14 @@ class RESTHandler:
 		
 	# Executes a GET request and returns the response & data
 	def get_request(self, endpoint):
-		return self.oauthhandler.client.request(endpoint)
+		with self.lock:
+			return self.oauthhandler.client.request(endpoint)
 	
 	# Executes a POST request and returns the response & data
 	def post_request(self, endpoint, post_body):
-		return self.oauthhandler.client.request(
-			endpoint,
-			method='POST',
-			body=urllib.urlencode({'status':post_body}),
-			headers=None
-		)
+		with self.lock:
+			return self.oauthhandler.client.request(
+				endpoint,
+				method='POST',
+				body=urllib.urlencode({'status':post_body}),
+			)
