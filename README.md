@@ -11,7 +11,7 @@ Using REST calls to the Twitter API, the bot can find trends, users, mentions, a
 With the way software is heading, I'm going to containerize hex-note to make spinning up deployments a bit easier.
 I also plan to expand the bot by adding more 'thoughtful' speech patterns. 
 
-##To Run:
+## To Run:
  
 Copy configtemplate.cfg and drop it in the same directory has the program.
 Rename it **app.cfg** and fill out the values with your relevant information.
