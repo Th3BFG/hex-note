@@ -1,8 +1,8 @@
-FROM python:3.6-alpine
+FROM python:3.7-alpine
 
 COPY . /app
 WORKDIR /app
 
 RUN pip install -r requirements.txt
 
-CMD python -O /src/hexnote.py
+CMD ["python", "-O", "./src/hexnote.py -l INFO"]
