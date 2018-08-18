@@ -91,5 +91,6 @@ ENV/
 .ropeproject
 
 # Config File
+cfg/
 app.cfg
 *.cfg
