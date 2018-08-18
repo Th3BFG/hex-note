@@ -13,8 +13,7 @@ I also plan to expand the bot by adding more 'thoughtful' speech patterns.
 
 ## To Run:
  
-Copy configtemplate.cfg and drop it in the same directory has the program.
-Rename it **app.cfg** and fill out the values with your relevant information.
+Rename **configtemplate.cfg** to **app.cfg** and fill out the values with your relevant information.
 The logging level can be set from the command line, use -h for help.
 Running Hex Note without the Optimize **(-O)** flag will prevent it from tweeting. Useful for debugging.
 Run with: `python -O hexnote.py`
